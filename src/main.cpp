@@ -1,5 +1,5 @@
-#include "Cube.hpp"
-#include "Solver.hpp"
+#include "cube.hpp"
+#include "solver.hpp"
 #include <iostream>
 
 int main() {

@@ -74,10 +74,32 @@ void Cube::rotate_ring(const std::array<int, 12>& indices) {
         state[indices[i]] = temp[(i + 9) % 12];
 }
 
-// Face turns simplified — you can improve later
-void Cube::turnU() {}
-void Cube::turnD() {}
-void Cube::turnF() {}
-void Cube::turnB() {}
-void Cube::turnL() {}
-void Cube::turnR() {}
+void Cube::turnU() {
+    rotate_face(U);
+    rotate_ring({36, 37, 38, 18, 19, 20, 9, 10, 11, 45, 46, 47});
+}
+
+void Cube::turnD() {
+    rotate_face(D);
+    rotate_ring({15, 16, 17, 24, 25, 26, 42, 43, 44, 33, 34, 35});
+}
+
+void Cube::turnF() {
+    rotate_face(F);
+    rotate_ring({6, 7, 8, 36, 39, 42, 27, 28, 29, 47, 50, 53});
+}
+
+void Cube::turnB() {
+    rotate_face(B);
+    rotate_ring({2, 1, 0, 45, 48, 51, 33, 32, 31, 38, 41, 44});
+}
+
+void Cube::turnL() {
+    rotate_face(L);
+    rotate_ring({0, 3, 6, 18, 21, 24, 27, 30, 33, 53, 52, 51});
+}
+
+void Cube::turnR() {
+    rotate_face(R);
+    rotate_ring({8, 5, 2, 35, 32, 29, 26, 23, 20, 45, 48, 51});
+}

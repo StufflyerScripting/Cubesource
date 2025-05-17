@@ -1,2 +1,2 @@
 # Cubesource
-A Rubik’s cube solver
+A Rubik’s cube solver still WIP

@@ -1,62 +1,73 @@
-#include "solver.hpp"
-#include <random>
+// KociembaPhase1_IDA.cpp
+#include "Cube.hpp"
+#include <vector>
+#include <string>
+#include <array>
+#include <algorithm>
+#include <iostream>
 
-std::vector<std::string> generate_scramble(int length) {
-    static const std::vector<std::string> moves = {
-        "U", "U'", "U2", "D", "D'", "D2",
-        "F", "F'", "F2", "B", "B'", "B2",
-        "L", "L'", "L2", "R", "R'", "R2"
-    };
+const std::array<std::string, 18> PHASE1_MOVES = {
+    "U", "U'", "U2",
+    "D", "D'", "D2",
+    "F", "F'", "F2",
+    "B", "B'", "B2",
+    "L", "L'", "L2",
+    "R", "R'", "R2"
+};
 
-    std::vector<std::string> scramble;
-    std::string last_face = "";
-
-    std::random_device rd;
-    std::mt19937 rng(rd());
-    std::uniform_int_distribution<> dist(0, moves.size() - 1);
-
-    while (scramble.size() < length) {
-        std::string move = moves[dist(rng)];
-        std::string face = move.substr(0, 1);
-
-        if (face != last_face) {
-            scramble.push_back(move);
-            last_face = face;
-        }
-    }
-    return scramble;
+// --- Heuristic ---
+int heuristic(const Cube& cube) {
+    int ori = get_orientation_index(cube);
+    int slice = get_e_slice_index(cube);
+    // Rough heuristic: count flipped edges and misplaced E-slice edges
+    int edgeOri = __builtin_popcount(ori);
+    int sliceWrong = __builtin_popcount(slice ^ 0xF00);
+    return std::max((edgeOri + 1) / 2, (sliceWrong + 1) / 2);  // each move can fix up to 2
 }
 
-bool solve(Cube& cube, int max_depth, std::vector<std::string>& solution,
-           std::vector<std::string> path, int depth) {
-    if (cube.is_solved()) {
-        solution = path;
-        return true;
+// --- IDA* DFS ---
+bool dfs(Cube& cube, int g, int threshold, std::vector<std::string>& path, int& nextThreshold) {
+    int f = g + heuristic(cube);
+    if (f > threshold) {
+        nextThreshold = std::min(nextThreshold, f);
+        return false;
     }
 
-    if (depth >= max_depth) return false;
+    if (get_orientation_index(cube) == 0 && get_e_slice_index(cube) == 0xF00) {
+        return true; // Solved!
+    }
 
-    static const std::vector<std::string> moves = {
-        "U", "U'", "U2", "D", "D'", "D2",
-        "F", "F'", "F2", "B", "B'", "B2",
-        "L", "L'", "L2", "R", "R'", "R2"
-    };
-
-    for (const auto& move : moves) {
-        Cube copy = cube;
-        copy.move(move);
+    for (const std::string& move : PHASE1_MOVES) {
+        Cube next = cube;
+        next.move(move);
         path.push_back(move);
 
-        if (solve(copy, max_depth, solution, path, depth + 1))
+        if (dfs(next, g + 1, threshold, path, nextThreshold))
             return true;
 
-        path.pop_back();
+        path.pop_back(); // backtrack
     }
 
     return false;
 }
 
-// Wrapper
-bool solve(Cube& cube, int max_depth, std::vector<std::string>& solution) {
-    return solve(cube, max_depth, solution, {}, 0);
+// --- Main IDA* Loop ---
+std::vector<std::string> solve_phase1(const Cube& startCube) {
+    int threshold = heuristic(startCube);
+
+    while (threshold <= 20) { // reasonable move cap
+        std::vector<std::string> path;
+        int nextThreshold = 1e9;
+        Cube copy = startCube;
+
+        if (dfs(copy, 0, threshold, path, nextThreshold))
+            return path;
+
+        if (nextThreshold == 1e9)
+            break; // No more paths to search
+
+        threshold = nextThreshold;
+    }
+
+    return {}; // No solution found
 }
